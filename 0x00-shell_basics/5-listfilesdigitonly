@@ -1,4 +1,5 @@
 
 #!/bin/bash
-ls lan
-ls -na
+ -lna
+
+
