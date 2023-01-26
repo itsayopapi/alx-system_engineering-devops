@@ -53,9 +53,13 @@ Examples:
 
 Not passing Shellcheck:
 
+![image](https://user-images.githubusercontent.com/111683116/214847402-931049cc-e569-4e89-9eb4-dd9345b69a72.png)
+
 
 
 Passing Shellcheck:
+
+![image](https://user-images.githubusercontent.com/111683116/214847475-7468bdfd-d994-4e3d-b183-e98ec8f791f9.png)
 
 
 
