@@ -1,16 +1,21 @@
-#!/usr/bin/env bash
-# Installs nginx web server
+#!/bin/bash
 
+# Install web server
 apt-get update
-apt-get install -y nginx
-echo "Holberton School" > /etc/nginx/html/index.html
-echo "server {
-    listen 80;
-    listen [::]:80 default_server;
-    root   /etc/nginx/html;
-    index  index.html;
-    location /redirect_me {
-        return 301 https://twitter.com/Emmanue17280546;
-    }
-}" > /etc/nginx/sites-available/default
-service nginx restart
+apt-get -y install nginx
+
+# Create a new Virtual Host configuration file
+sudo nano /etc/nginx/sites-available/redirect.conf
+
+cat <<EOF | sudo tee /etc/apache2/sites-available/redirect.conf
+<VirtualHost *:80>
+    ServerName ayocoding12.tech
+    Redirect 301 / http://ayocoding12.tech
+</VirtualHost>
+EOF
+
+# Enable the Virtual Host
+sudo a2ensite redirect.conf
+
+# Reload Apache2 to apply the changes
+sudo systemctl reload apache2
