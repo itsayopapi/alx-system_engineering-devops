@@ -1,36 +1,63 @@
 #!/usr/bin/env bash
 
-# Install Nginx
-sudo apt-get update && sudo apt-get -y install nginx
+# Update the package repository and install Nginx
+sudo apt update
+sudo apt install -y nginx
 
-# Create web page files
-sudo mkdir -p /var/www/html
-sudo chmod -R 755 /var/www/html
-echo 'Hello World!' | sudo tee /var/www/html/index.html
-echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html
+# Set up the index and error pages
+sudo tee /var/www/html/index.html > /dev/null <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World!</title>
+</head>
+<body>
+    <h1>Hello World!</h1>
+</body>
+</html>
+EOF
 
-# Configure Nginx
-sudo sed -i 's/^/# /g' /etc/nginx/sites-enabled/default # comment out default config
-cat <<EOF | sudo tee /etc/nginx/sites-available/custom-header
+sudo tee /var/www/html/error.html > /dev/null <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error 404</title>
+</head>
+<body>
+    <h1>Error 404: Not Found</h1>
+    <p>Ceci n'est pas une page</p>
+</body>
+</html>
+EOF
+
+# Set up the Nginx configuration file
+sudo tee /etc/nginx/sites-available/default > /dev/null <<EOF
 server {
-    listen 80;
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    root /var/www/html;
+    index index.html index.htm index.nginx-debian.html;
+
     server_name _;
+
+    error_page 404 /error.html;
+
     add_header X-Served-By \$hostname;
 
-    location = /404.html {
-        root /var/www/html;
+    location /error.html {
         internal;
     }
 
     location /redirect_me {
-        return 301 https://www.blog.ehoneahobed.com;
+        return 301 https://www.google.com;
+    }
+
+    location / {
+        try_files \$uri \$uri/ =404;
     }
 }
 EOF
-sudo ln -s /etc/nginx/sites-available/custom-header /etc/nginx/sites-enabled/custom-header # enable custom config
-
-# Allow requests through port 80
-sudo ufw allow 'Nginx HTTP'
 
 # Restart Nginx
 sudo systemctl restart nginx
