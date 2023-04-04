@@ -1,28 +1,40 @@
 #!/usr/bin/env bash
-# Create a script to install and configure HAProxy on lb-01 server
-# Configure HAProxy to send traffic to web-01 and web-02 servers
-# Distribute requests using a roundrobin algorithm
-# Make sure that HAProxy can be managed via an init script
-# Install and configure HAproxy on my lb-01 server.
-sudo apt-get -y update
-apt-get -y install haproxy
+# This Bash script is designed to install and set up HAproxy on the server lb-01. 
+#The configuration for HAproxy is set up so that it directs traffic to the servers web-01 and web-02 using a round-robin algorithm.
+#The script also ensures that HAproxy can be managed using an init script and configures the servers with the correct hostnames, namely 158371-web-01 and 158371-web-02
+.
+# Install HAproxy
+apt-get update
+apt-get install haproxy -y
 
-# edit config file
-server_config=\
-"
-frontend  yonas-frontend
-        bind *:80
+# Configure HAproxy
+cat << EOF > /etc/haproxy/haproxy.cfg
+global
+        daemon
+        maxconn 256
+
+defaults
         mode http
-        default_backend yonas-backend
-backend yonas-backend
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+
+frontend http-in
+        bind *:80
+        default_backend servers
+
+backend servers
         balance roundrobin
-        server 63210-web-01 100.25.19.204:80 check
-        server 63210-web-02 54.157.159.85:80 check
-"
-echo "$server_config" | sudo tee -a /etc/haproxy/haproxy.cfg
+        server 158371-web-01 54.160.98.170:80 check
+        server 158371-web-02 54.237.72.81:80 check
+EOF
 
-# enable haproxy to be started by init script
+# Update hostname configuration
+echo "54.160.98.170" > /etc/hostname
+echo "54.237.72.81" >> /etc/hostname
 
-echo "ENABLED=1" | sudo tee -a /etc/default/haproxy
+# Enable HAproxy init script
+sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/haproxy
 
-sudo service haproxy restart
+# Start HAproxy
+/etc/init.d/haproxy start
