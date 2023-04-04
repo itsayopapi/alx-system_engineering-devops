@@ -1,29 +1,23 @@
 #!/usr/bin/env bash
-# Install nginx server and returns a custom header on request
-sudo apt-get update -y
-sudo apt-get install -y nginx
+# configures an Ubuntu machine with nginx
+FILE="/etc/nginx/sites-available/default"
+ERRORFILE="/usr/share/nginx/html/404error.html"
 
-# Set firewall to allow request via port 80
-sudo ufw allow 'Nginx HTTP'
+REDIRECT="\n\tlocation /redirect_me {\n\t\treturn 301 https://youtu.be/dQw4w9WgXcQ;\n\t}\n"
+ERRORREDIRECT="\n\terror_page 404 /404error.html;\n\tlocation = /404error.html {\n\t\troot /usr/share/nginx/html;\n\t\tinternal;\n\t}\n"
+CUSTOMHEADER='\n\tadd_header X-Served-By $hostname;\n'
 
-sudo mkdir -p /var/www/html
+STRING="Hello World!"
+FOUR="Ceci n'est pas une page"
 
-# Set permissions to allow us to easily create files in this repo
-sudo chmod -R 755 /var/www
+apt-get -y update
+apt-get -y install nginx
+ufw allow 'Nginx HTTP'
+echo "$STRING" > /var/www/html/index.nginx-debian.html
+sed -i "37i\ $REDIRECT" "$FILE"
 
-# Create the index page
-echo 'Hello World!' |sudo tee  /var/www/html/index.html
+echo "$FOUR" > "$ERRORFILE"
+sed -i "37i\ $ERRORREDIRECT" "$FILE"
 
-# Create error 404 page
-echo "Ceci n'est pas une page" |sudo tee /var/www/html/404.html
-
-# Set redirect for a single page(/redirect_me) and add header to show hostname
-string_for_replacement="server_name _;\n\tadd_header X-Served-By \$hostname;\n\trewrite ^\/redirect_me https:\/\/www.ayocoding12.tech permanent;"
-sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
-
-# Set redirect for 404 error page
-string_for_replacement="listen 80 default_server;\n\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
-sudo sed -i "s/listen 80 default_server;/$string_for_replacement/" /etc/nginx/sites-enabled/default
-
-# Restart the web server
-sudo service nginx restart
+sed -i "37i\ $CUSTOMHEADER" "$FILE"
+service nginx restart
