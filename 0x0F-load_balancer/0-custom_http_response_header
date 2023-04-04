@@ -1,44 +1,29 @@
 #!/usr/bin/env bash
-# Script to setup an nginx server
-index_file=/var/www/html/index.nginx-debian.html
-error_file=/var/www/html/error.html
-default_web=/etc/nginx/sites-available/default
-config_text=\
-"server {
-	listen 80 default_server;
-	listen [::]:80 default_server;
+# Install nginx server and returns a custom header on request
+sudo apt-get update -y
+sudo apt-get install -y nginx
 
-	root /var/www/html;
+# Set firewall to allow request via port 80
+sudo ufw allow 'Nginx HTTP'
 
-	index index.html index.htm index.nginx-debian.html;
+sudo mkdir -p /var/www/html
 
-	server_name _;
+# Set permissions to allow us to easily create files in this repo
+sudo chmod -R 755 /var/www
 
-	error_page 404 /error.html;
-	add_header X-Served-By $(hostname);
+# Create the index page
+echo 'Hello World!' |sudo tee  /var/www/html/index.html
 
-	location /error.html {
-		 root /var/www/html;
-		 internal;
-	}
+# Create error 404 page
+echo "Ceci n'est pas une page" |sudo tee /var/www/html/404.html
 
-	location /redirect_me {
-		 rewrite ^/redirect_me https://google.com permanent;
-	}
+# Set redirect for a single page(/redirect_me) and add header to show hostname
+string_for_replacement="server_name _;\n\tadd_header X-Served-By \$hostname;\n\trewrite ^\/redirect_me https:\/\/www.ayocoding12.tech permanent;"
+sudo sed -i "s/server_name _;/$string_for_replacement/" /etc/nginx/sites-enabled/default
 
-	location / {
-		 try_files \$uri \$uri/ =404;
-	}
-}"
-sudo apt update
-sudo apt install nginx -y
-echo "Hello World!" | sudo tee $index_file &&
-sudo chmod 644 $index_file
-sudo chmod a+w $default_web &&
-echo "$config_text" > $default_web
-sudo chmod 644 $default_web
-sudo touch $error_file
-sudo chmod a+w $error_file
-sudo echo "Ceci n'est pas une page" > $error_file
-sudo chmod 644 $error_file
+# Set redirect for 404 error page
+string_for_replacement="listen 80 default_server;\n\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
+sudo sed -i "s/listen 80 default_server;/$string_for_replacement/" /etc/nginx/sites-enabled/default
+
+# Restart the web server
 sudo service nginx restart
