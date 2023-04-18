@@ -1,0 +1,16 @@
+# install ufw firewall
+sudo apt update -y
+sudo apt install ufw -y
+
+# blockinng all incoming traffic, except the following TCP ports:22 (SSH), 443 (HTTPS SSL), 80 (HTTP)
+sudo ufw default deny incoming -y
+sudo ufw default allow outgoing -y
+
+# allowing 22 (SSH), 443 (HTTPS SSL), 80 (HTTP) connections
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+
+# enable and view status
+sudo ufw enable
+sudo ufw status numbered
